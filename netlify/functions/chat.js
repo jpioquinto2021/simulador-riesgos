@@ -3,20 +3,33 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: event.body,
-  });
+  const body = JSON.parse(event.body);
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  const messages = body.messages.map(m => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }]
+  }));
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: body.system }] },
+        contents: messages,
+        generationConfig: { maxOutputTokens: 1000 }
+      })
+    }
+  );
 
   const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error al obtener respuesta.";
+
   return {
     statusCode: 200,
     headers: { "Access-Control-Allow-Origin": "*" },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ content: [{ text }] }),
   };
 };
