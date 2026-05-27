@@ -25,8 +25,7 @@ exports.handler = async (event) => {
   );
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error al obtener respuesta.";
-
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(data);
   return {
     statusCode: 200,
     headers: { "Access-Control-Allow-Origin": "*" },
