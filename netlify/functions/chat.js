@@ -5,10 +5,13 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body);
     const apiKey = process.env.GEMINI_API_KEY;
 
-    const messages = body.messages.map(m => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }]
-    }));
+    const contents = body.messages.map((m, i) => {
+      const role = m.role === "assistant" ? "model" : "user";
+      const text = i === 0 
+        ? `${body.system}\n\n---\n\n${m.content}`
+        : m.content;
+      return { role, parts: [{ text }] };
+    });
 
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -16,8 +19,7 @@ exports.handler = async (event) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: body.system }] },
-          contents: messages,
+          contents,
           generationConfig: { maxOutputTokens: 1000 }
         })
       }
