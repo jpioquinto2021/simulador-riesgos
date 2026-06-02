@@ -218,9 +218,9 @@ const callClaude = async (msgs) => {
             <div style={{ fontSize: 18, fontWeight: 700, color: "#f1f5f9" }}>Administración de Riesgos</div>
             <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>Simulador Académico · ECA52411</div>
           </div>
-          <div style={{ background: "#0f172a", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: "#94a3b8", borderLeft: "3px solid #3b82f6" }}>
-            Antes de iniciar, regístrate con tus datos académicos.
-          </div>
+          221  <div style={{ background: "#0f172a", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: "#94a3b8", borderLeft: "3px solid #3b82f6" }}>
+222    Antes de iniciar, regístrate con tus datos académicos.
+223  </div>
           {field("nombre", "Nombre y Apellido Completos *", "Ej: Alejandro García Ruiz")}
           {field("cedula", "Número de Cédula *", "Ej: 1020345678")}
           {field("email", "Correo Electrónico *", "Ej: estudiante@poligran.edu.co", "email")}
