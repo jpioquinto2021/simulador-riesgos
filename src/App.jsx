@@ -218,9 +218,18 @@ const callClaude = async (msgs) => {
             <div style={{ fontSize: 18, fontWeight: 700, color: "#f1f5f9" }}>Administración de Riesgos</div>
             <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>Simulador Académico · ECA52411</div>
           </div>
-          221  <div style={{ background: "#0f172a", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: "#94a3b8", borderLeft: "3px solid #3b82f6" }}>
-222    Antes de iniciar, regístrate con tus datos académicos.
-223  </div>
+          <div style={{ background: "#0f172a", borderRadius: 10, padding: "12px 14px", marginBottom: 16, fontSize: 12, color: "#94a3b8", borderLeft: "3px solid #3b82f6" }}>
+  Antes de iniciar, regístrate con tus datos académicos.
+</div>
+<div style={{ background: "#0f172a", borderRadius: 10, padding: "12px 14px", marginBottom: 20, fontSize: 12, lineHeight: 1.7 }}>
+  <div style={{ color: "#fbbf24", fontWeight: 700, marginBottom: 8 }}>📌 ¿Cómo usar el simulador?</div>
+  <div style={{ color: "#94a3b8" }}>
+    <div>🎓 El tutor te guía por <strong style={{color:"#60a5fa"}}>6 sesiones</strong> evaluando tus respuestas con rigor académico.</div>
+    <div style={{marginTop:6}}>📚 Si tienes dudas, haz clic en <strong style={{color:"#60a5fa"}}>"Recursos S1...S6"</strong> (botón superior) para ver la bibliografía real del syllabus.</div>
+    <div style={{marginTop:6}}>🔗 Biblioteca virtual: <a href="https://login.loginbiblio.poligran.edu.co" target="_blank" rel="noreferrer" style={{color:"#3b82f6"}}>loginbiblio.poligran.edu.co</a> con tus credenciales institucionales.</div>
+    <div style={{marginTop:6}}>📄 Al finalizar puedes <strong style={{color:"#60a5fa"}}>descargar tu reporte</strong> con toda la simulación.</div>
+  </div>
+</div>
           {field("nombre", "Nombre y Apellido Completos *", "Ej: Alejandro García Ruiz")}
           {field("cedula", "Número de Cédula *", "Ej: 1020345678")}
           {field("email", "Correo Electrónico *", "Ej: estudiante@poligran.edu.co", "email")}
