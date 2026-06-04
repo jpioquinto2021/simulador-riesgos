@@ -146,7 +146,7 @@ const callClaude = async (msgs) => {
   const handleRegister = async () => {
     if (!validateForm()) return;
     try {
-      await fetch("/.netlify/functions/chat", {
+await fetch("/.netlify/functions/chat", {
   method: "POST",
   body: JSON.stringify({ type: "register", ...student }),
 });
