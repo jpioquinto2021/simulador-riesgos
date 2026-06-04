@@ -146,10 +146,10 @@ const callClaude = async (msgs) => {
   const handleRegister = async () => {
     if (!validateForm()) return;
     try {
-      await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ type: "register", ...student }),
-      });
+      await fetch("/.netlify/functions/chat", {
+  method: "POST",
+  body: JSON.stringify({ type: "register", ...student }),
+});
     } catch (err) {
       console.warn("Sheet no disponible:", err);
     }
