@@ -154,13 +154,23 @@ export default function App() {
   };
 
   const callClaude = async (msgs) => {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: SYSTEM_PROMPT, messages: msgs }),
-    });
-    const data = await res.json();
-    return data.content?.[0]?.text || "Error al obtener respuesta.";
+    const onNetlify = window.location.hostname.includes("netlify");
+    if (onNetlify) {
+      const res = await fetch("/.netlify/functions/chat", {
+        method: "POST",
+        body: JSON.stringify({ system: SYSTEM_PROMPT, messages: msgs }),
+      });
+      const data = await res.json();
+      return data.content?.[0]?.text || "Error al obtener respuesta.";
+    } else {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: SYSTEM_PROMPT, messages: msgs }),
+      });
+      const data = await res.json();
+      return data.content?.[0]?.text || "Error al obtener respuesta.";
+    }
   };
 
   const checkAndRegister = async () => {
