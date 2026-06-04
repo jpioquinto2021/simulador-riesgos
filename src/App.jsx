@@ -221,6 +221,9 @@ const callClaude = async (msgs) => {
           <div style={{ background: "#0f172a", borderRadius: 10, padding: "12px 14px", marginBottom: 16, fontSize: 12, color: "#94a3b8", borderLeft: "3px solid #3b82f6" }}>
   Antes de iniciar, regístrate con tus datos académicos.
 </div>
+<div style={{ background: "#0f172a", borderRadius: 10, padding: "12px 14px", marginBottom: 16, fontSize: 12, color: "#94a3b8", borderLeft: "3px solid #3b82f6" }}>
+  Antes de iniciar, regístrate con tus datos académicos.
+</div>
 <div style={{ background: "#0f172a", borderRadius: 10, padding: "12px 14px", marginBottom: 20, fontSize: 12, lineHeight: 1.7 }}>
   <div style={{ color: "#fbbf24", fontWeight: 700, marginBottom: 8 }}>📌 ¿Cómo usar el simulador?</div>
   <div style={{ color: "#94a3b8" }}>
@@ -230,18 +233,6 @@ const callClaude = async (msgs) => {
     <div style={{marginTop:6}}>📄 Al finalizar puedes <strong style={{color:"#60a5fa"}}>descargar tu reporte</strong> con toda la simulación.</div>
   </div>
 </div>
-          {field("nombre", "Nombre y Apellido Completos *", "Ej: Alejandro García Ruiz")}
-          {field("cedula", "Número de Cédula *", "Ej: 1020345678")}
-          {field("email", "Correo Electrónico *", "Ej: estudiante@poligran.edu.co", "email")}
-          {field("movil", "Número de Móvil *", "Ej: 3001234567", "tel")}
-          <button onClick={handleRegister} style={{ width: "100%", background: "linear-gradient(135deg, #3b82f6, #1d4ed8)", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontSize: 15, fontWeight: 700, cursor: "pointer", marginTop: 6 }}>
-            🚀 Iniciar Simulación
-          </button>
-          <div style={{ fontSize: 11, color: "#475569", textAlign: "center", marginTop: 12 }}>🔒 Datos usados exclusivamente con fines académicos</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: "#0f172a", minHeight: "100vh", display: "flex", flexDirection: "column", color: "#e2e8f0" }}>
