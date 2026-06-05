@@ -1,6 +1,6 @@
 exports.handler = async (event) => {
   const headers = { "Access-Control-Allow-Origin": "*" };
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8IxiXkyi2WiEx56iI6BRkQpOIArxGILZEKpuNoi5_Oq20k40twf0ydjFvyg5D2da1/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxV4SnwJTI9z_gTBsMSb7zTKFMP2U9KznNFshLC1qWh-4-OV8WvJAESfES0SJm166bE/exec";
 
   try {
     const body = JSON.parse(event.body);
