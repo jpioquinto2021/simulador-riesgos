@@ -467,7 +467,7 @@ if (ctx && typeof Chart !== "undefined") {
         { label: "Máximo", data: ${JSON.stringify(MAX_PTS)}, backgroundColor: "rgba(15,45,94,0.08)", borderRadius: 6 }
       ]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "top", labels: { font: { size: 11 } } } }, scales: { y: { beginAtZero: true, max: 20, ticks: { font: { size: 11 } } }, x: { ticks: { font: { size: 11 } } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "top", labels: { font: { size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 11 } } }, x: { ticks: { font: { size: 11 } } } } }
   });
 }
 <\/script></body></html>`;
