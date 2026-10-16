@@ -272,28 +272,8 @@ export default function App() {
     const fechaLarga = ahora.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
     const horaCorta = ahora.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
     const fechaArchivo = ahora.toISOString().slice(0, 10);
-    const MAX_PTS = [10, 15, 20, 20, 20, 15];
-    const SES_LABELS = ["Contexto y Clasificación", "Marco ISO 31000 / NTC 5254", "Identificación de Riesgos", "Análisis y Evaluación", "Pérdidas Máximas y Matrices", "Tratamiento del Riesgo"];
-    const sesScores = Array(6).fill(null);
-    messages.forEach(m => {
-      if (m.role !== "assistant") return;
-      const re = /\|\s*[Ss](?:esi[oó]n\s*)?(\d)\s*(?:de\s*6)?\s*\|\s*(\d+)\s*\/?\d*\s*\|\s*\d+\s*\|\s*(\d+)/g;
-      let m2;
-      while ((m2 = re.exec(m.content)) !== null) {
-        const idx = parseInt(m2[1]) - 1;
-        const pts = parseInt(m2[2]);
-        if (idx >= 0 && idx < 6 && pts >= 0 && pts <= MAX_PTS[idx]) sesScores[idx] = pts;
-      }
-      const re2 = /\|\s*S(\d)\s*\|\s*(\d+)\s*\|\s*\d+\s*\|\s*\d+/g;
-      while ((m2 = re2.exec(m.content)) !== null) {
-        const idx = parseInt(m2[1]) - 1;
-        const pts = parseInt(m2[2]);
-        if (idx >= 0 && idx < 6 && pts >= 0 && pts <= MAX_PTS[idx] && sesScores[idx] === null) sesScores[idx] = pts;
-      }
-    });
-    const totalObtenido = score > 0 ? score : sesScores.reduce((a, b) => a + (b || 0), 0);
-      // ── 1. Parsear puntajes por sesión ─────────────────────────────────
-  const MAX_PTS = [10,15,20,20,20,15];
+          // ── 1. Parsear puntajes por sesión 
+    const MAX_PTS = [10,15,20,20,20,15];
   const SES_LABELS = ["Contexto y Clasificación","Marco ISO 31000 / NTC 5254",
     "Identificación de Riesgos","Análisis y Evaluación",
     "Pérdidas Máximas y Matrices","Tratamiento del Riesgo"];
