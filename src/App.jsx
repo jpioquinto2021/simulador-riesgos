@@ -294,8 +294,32 @@ export default function App() {
 
   const totalTag = [...textoTutor.matchAll(/PUNTAJE_TOTAL:\s*(\d{1,3})\s*\/\s*100/gi)].pop();
   const sumaSes = sesScores.reduce((a, b) => a + (b || 0), 0);
-  const totalObtenido = totalTag ? +totalTag[1] : (sumaSes > 0 ? sumaSes : score);
-
+    // ── 1. Parsear puntajes por pregunta (formato del tutor) ──────────
+  const SES_LABELS = ["Contexto y Clasificación","Marco ISO 31000 / NTC 5254",
+    "Identificación de Riesgos","Análisis y Evaluación",
+    "Pérdidas Máximas y Matrices","Tratamiento del Riesgo"];
+  const porPregunta = {};
+  messages.forEach(m => {
+    if (m.role !== "assistant") return;
+    const t = String(m.content).replace(/\*\*/g, "");
+    const enc = t.match(/Pregunta\s*(\d+)\s*,?\s*(?:de\s*la\s*)?Sesi[oó]n\s*(\d)/i);
+    const pun = t.match(/Puntuaci[oó]n\s*:?\s*(\d{1,3})\s*\/\s*(\d{1,3})/i);
+    if (!enc || !pun) return;
+    const s = +enc[2] - 1, obt = +pun[1], max = +pun[2];
+    if (s < 0 || s > 5 || max === 0 || obt > max) return;
+    porPregunta[s + "-" + enc[1]] = { s, obt, max };   // si re-evalúa, gana la última
+  });
+  const sesScores = Array(6).fill(null);
+  const sesMax = Array(6).fill(0);
+  Object.values(porPregunta).forEach(({ s, obt, max }) => {
+    sesScores[s] = (sesScores[s] || 0) + obt;
+    sesMax[s] += max;
+  });
+  const MAX_PTS = sesMax.map(x => x || 30);
+  const obtTotal = sesScores.reduce((a, b) => a + (b || 0), 0);
+  const maxTotal = sesMax.reduce((a, b) => a + b, 0);
+  const totalTag = null;   // compatibilidad con el código de abajo
+  const totalObtenido = maxTotal > 0 ? Math.round(obtTotal / maxTotal * 100) : score;
   // ── Nota (escala 0–5) y estados separados ─────────────────────────
   const notaNum = Math.round((totalObtenido / 100) * 5 * 10) / 10;
   const finalizado = !!totalTag || sesScores.every(s => s !== null);
