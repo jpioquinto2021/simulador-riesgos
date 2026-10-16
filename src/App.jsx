@@ -325,8 +325,8 @@ export default function App() {
          Finalizado · ${aprobado ? "Aprobado" : "No aprobado"}</span>`
     : `<span style="background:#f59e0b;color:#fff;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700">En curso</span>`;
     const pct = Math.round((totalObtenido / 100) * 100);
-    const nota = totalObtenido >= 90 ? "5.0" : totalObtenido >= 80 ? "4.5" : totalObtenido >= 70 ? "4.0" : totalObtenido >= 60 ? "3.5" : "3.0";  const nota = notaNum.toFixed(1);
-    const nivel = totalObtenido >= 90 ? "Sobresaliente" : totalObtenido >= 80 ? "Excelente" : totalObtenido >= 70 ? "Bueno" : totalObtenido >= 60 ? "Aceptable" : "En desarrollo";   const nivel = finalizado ? (aprobado ? "Finalizado · Aprobado" : "Finalizado · No aprobado") : "En curso";
+      const nota = notaNum.toFixed(1);
+      const nivel = finalizado ? (aprobado ? "Finalizado · Aprobado" : "Finalizado · No aprobado") : "En curso";
     const colorNota = totalObtenido >= 80 ? "#10b981" : totalObtenido >= 60 ? "#f59e0b" : "#ef4444";
     const md2html = (txt) => {
       if (!txt) return "";
