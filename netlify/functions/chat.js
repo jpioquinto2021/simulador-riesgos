@@ -1,4 +1,4 @@
-export default async (event) => {
+export const handler = async (event) => {
   const headers = { "Access-Control-Allow-Origin": "*" }
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxV4SnwJTI9z_gTBsMSb7zTKFMP2U9KznNFshLC1qWh-4-OV8WvJAESfES0SJm166bE/exec"
   try {
