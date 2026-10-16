@@ -149,11 +149,14 @@ export default function App() {
     return null;
   };
 
-  const detectScore = (text) => {
-    const m = text.match(/[Aa]cumulado[^\d]*(\d{1,3})/);
-    if (m) return parseInt(m[1]);
-    return null;
-  };
+ const detectScore = (text) => {
+  const matches = [...text.matchAll(/[Aa]cumulado[^\d]*(\d{1,3})/g)];
+  if (matches.length > 0) {
+    const valores = matches.map(m => parseInt(m[1])).filter(v => v > 0 && v <= 100);
+    if (valores.length > 0) return Math.max(...valores);
+  }
+  return null;
+};
 
   const callClaude = async (msgs) => {
     const onNetlify = window.location.hostname.includes("netlify");
