@@ -115,7 +115,30 @@ export default function App() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
-  const saveSession = async (msgs, sess, sc, std) => {
+    const saveSession = async (msgs, sess, sc, std) => {
+    // ── Puntaje real y detalle por pregunta (para Sheet e informe docente) ──
+    const porPregunta = {};
+    msgs.forEach(m => {
+      if (m.role !== "assistant") return;
+      const t = String(m.content).replace(/\*\*/g, "");
+      const cands = [
+        [/Pregunta\s*(\d+)[^\n]{0,30}?Sesi[oó]n\s*(\d)/i, 2, 1],
+        [/Sesi[oó]n\s*(\d)[^\n]{0,30}?Pregunta\s*(\d+)/i, 1, 2],
+        [/Pregunta\s*(\d)\s*\.\s*(\d)/i, 1, 2],
+      ].map(([re, si, qi]) => { const x = t.match(re); return x ? { pos: x.index, s: +x[si], q: +x[qi] } : null; })
+       .filter(Boolean).sort((a, b) => a.pos - b.pos);
+      const pun = t.match(/(?:Puntuaci[oó]n|Puntaje|Calificaci[oó]n)\s*(?:obtenida)?\s*:?\s*(\d{1,3})\s*\/\s*(\d{1,3})/i);
+      if (!cands.length || !pun) return;
+      const s = cands[0].s, q = cands[0].q, obt = +pun[1], max = +pun[2];
+      if (s < 1 || s > 6 || max === 0 || obt > max) return;
+      const fb = (t.match(/(?:Ajuste|Lo que (?:te )?falt[oó]|Por mejorar|Oportunidad(?:es)? de mejora|Aspectos? a mejorar)[^\n]*\n([\s\S]{0,400})/i) || [])[1] || "";
+      porPregunta[s + "-" + q] = { sesion: s, pregunta: q, obt, max, obs: fb.replace(/\s+/g, " ").trim().slice(0, 300) };
+    });
+    const evaluaciones = Object.values(porPregunta);
+    const obtT = evaluaciones.reduce((a, e) => a + e.obt, 0);
+    const maxT = evaluaciones.reduce((a, e) => a + e.max, 0);
+    const puntajeReal = maxT > 0 ? Math.round(obtT / maxT * 100) : 0;
+
     const data = JSON.stringify({ messages: msgs, session: sess, score: sc, student: std, lastUpdate: new Date().toISOString() });
     try { localStorage.setItem(`sim_${std.cedula}`, data); } catch (e) {
       try { await window.storage?.set(`sim_${std.cedula}`, data); } catch (e2) {}
@@ -123,7 +146,7 @@ export default function App() {
     try {
       await fetch("/.netlify/functions/chat", {
         method: "POST",
-        body: JSON.stringify({ type: "progress", cedula: std.cedula, session: sess, score: sc }),
+        body: JSON.stringify({ type: "progress", cedula: std.cedula, nombre: std.nombre, session: sess, score: puntajeReal, evaluaciones }),
       });
     } catch (e) {}
   };
