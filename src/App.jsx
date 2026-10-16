@@ -67,7 +67,15 @@ Al final de cada sesión muestra tabla: | Sesión | Puntos obtenidos | Máximo |
 
 TONO: Tutor de posgrado: profesional, exigente, técnico, constructivo.
 FORMATO: Markdown. Indica "SESIÓN X de 6 — Pregunta Y de Z" al inicio de cada pregunta.
-INICIO: Saluda al estudiante por su nombre, presenta brevemente el caso UMD S.A.S. e inicia SESIÓN 1.`;
+INICIO: Saluda al estudiante por su nombre, presenta brevemente el caso UMD S.A.S. e inicia SESIÓN 1.
+REGISTRO DE PUNTAJE (OBLIGATORIO):
+- Al cerrar CADA sesión escribe, en una línea sola y exactamente así:
+  PUNTAJE_SESION: S{n} = {puntos}/{máximo}
+  (máximos: S1=10, S2=15, S3=20, S4=20, S5=20, S6=15)
+- Al terminar la Sesión 6 escribe también:
+  PUNTAJE_TOTAL: {total}/100
+- No cambies este formato, no uses negrillas ni tablas en esas líneas.
+`;
 
 function parseMarkdown(text) {
   text = text.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g, (_, header, rows) => {
@@ -284,9 +292,41 @@ export default function App() {
       }
     });
     const totalObtenido = score > 0 ? score : sesScores.reduce((a, b) => a + (b || 0), 0);
+      // ── 1. Parsear puntajes por sesión ─────────────────────────────────
+  const MAX_PTS = [10,15,20,20,20,15];
+  const SES_LABELS = ["Contexto y Clasificación","Marco ISO 31000 / NTC 5254",
+    "Identificación de Riesgos","Análisis y Evaluación",
+    "Pérdidas Máximas y Matrices","Tratamiento del Riesgo"];
+  const sesScores = Array(6).fill(null);
+  const textoTutor = messages.filter(m => m.role === "assistant")
+    .map(m => String(m.content).replace(/\*\*/g, "")).join("\n");
+
+  // a) Registro oficial: PUNTAJE_SESION: S3 = 18/20
+  for (const m of textoTutor.matchAll(/PUNTAJE_SESION:\s*S(\d)\s*=\s*(\d{1,2})\s*\/\s*\d{1,2}/gi)) {
+    const i = +m[1] - 1, p = +m[2];
+    if (i >= 0 && i < 6 && p <= MAX_PTS[i]) sesScores[i] = p;   // el último gana
+  }
+  // b) Respaldo para conversaciones antiguas: "Sesión 3 ... 18/20" o "S3 ... 18 pts"
+  for (const m of textoTutor.matchAll(/(?:Sesi[oó]n|\bS)\s*(\d)\b[^\n]{0,80}?(\d{1,2})\s*(?:\/\s*(\d{1,2})|pts|puntos)/gi)) {
+    const i = +m[1] - 1, p = +m[2], max = m[3] ? +m[3] : MAX_PTS[i];
+    if (i >= 0 && i < 6 && sesScores[i] === null && max === MAX_PTS[i] && p <= max) sesScores[i] = p;
+  }
+
+  const totalTag = [...textoTutor.matchAll(/PUNTAJE_TOTAL:\s*(\d{1,3})\s*\/\s*100/gi)].pop();
+  const sumaSes = sesScores.reduce((a, b) => a + (b || 0), 0);
+  const totalObtenido = totalTag ? +totalTag[1] : (sumaSes > 0 ? sumaSes : score);
+
+  // ── Nota (escala 0–5) y estados separados ─────────────────────────
+  const notaNum = Math.round((totalObtenido / 100) * 5 * 10) / 10;
+  const finalizado = !!totalTag || sesScores.every(s => s !== null);
+  const aprobado = notaNum >= 3.0;
+  const estadoBadge = finalizado
+    ? `<span style="background:${aprobado ? "#10b981" : "#ef4444"};color:#fff;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700">
+         Finalizado · ${aprobado ? "Aprobado" : "No aprobado"}</span>`
+    : `<span style="background:#f59e0b;color:#fff;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700">En curso</span>`;
     const pct = Math.round((totalObtenido / 100) * 100);
-    const nota = totalObtenido >= 90 ? "5.0" : totalObtenido >= 80 ? "4.5" : totalObtenido >= 70 ? "4.0" : totalObtenido >= 60 ? "3.5" : "3.0";
-    const nivel = totalObtenido >= 90 ? "Sobresaliente" : totalObtenido >= 80 ? "Excelente" : totalObtenido >= 70 ? "Bueno" : totalObtenido >= 60 ? "Aceptable" : "En desarrollo";
+    const nota = totalObtenido >= 90 ? "5.0" : totalObtenido >= 80 ? "4.5" : totalObtenido >= 70 ? "4.0" : totalObtenido >= 60 ? "3.5" : "3.0";  const nota = notaNum.toFixed(1);
+    const nivel = totalObtenido >= 90 ? "Sobresaliente" : totalObtenido >= 80 ? "Excelente" : totalObtenido >= 70 ? "Bueno" : totalObtenido >= 60 ? "Aceptable" : "En desarrollo";   const nivel = finalizado ? (aprobado ? "Finalizado · Aprobado" : "Finalizado · No aprobado") : "En curso";
     const colorNota = totalObtenido >= 80 ? "#10b981" : totalObtenido >= 60 ? "#f59e0b" : "#ef4444";
     const md2html = (txt) => {
       if (!txt) return "";
