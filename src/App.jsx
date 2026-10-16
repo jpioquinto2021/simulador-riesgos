@@ -272,29 +272,7 @@ export default function App() {
     const fechaLarga = ahora.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
     const horaCorta = ahora.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
     const fechaArchivo = ahora.toISOString().slice(0, 10);
-          // ── 1. Parsear puntajes por sesión 
-    const MAX_PTS = [10,15,20,20,20,15];
-  const SES_LABELS = ["Contexto y Clasificación","Marco ISO 31000 / NTC 5254",
-    "Identificación de Riesgos","Análisis y Evaluación",
-    "Pérdidas Máximas y Matrices","Tratamiento del Riesgo"];
-  const sesScores = Array(6).fill(null);
-  const textoTutor = messages.filter(m => m.role === "assistant")
-    .map(m => String(m.content).replace(/\*\*/g, "")).join("\n");
-
-  // a) Registro oficial: PUNTAJE_SESION: S3 = 18/20
-  for (const m of textoTutor.matchAll(/PUNTAJE_SESION:\s*S(\d)\s*=\s*(\d{1,2})\s*\/\s*\d{1,2}/gi)) {
-    const i = +m[1] - 1, p = +m[2];
-    if (i >= 0 && i < 6 && p <= MAX_PTS[i]) sesScores[i] = p;   // el último gana
-  }
-  // b) Respaldo para conversaciones antiguas: "Sesión 3 ... 18/20" o "S3 ... 18 pts"
-  for (const m of textoTutor.matchAll(/(?:Sesi[oó]n|\bS)\s*(\d)\b[^\n]{0,80}?(\d{1,2})\s*(?:\/\s*(\d{1,2})|pts|puntos)/gi)) {
-    const i = +m[1] - 1, p = +m[2], max = m[3] ? +m[3] : MAX_PTS[i];
-    if (i >= 0 && i < 6 && sesScores[i] === null && max === MAX_PTS[i] && p <= max) sesScores[i] = p;
-  }
-
-  const totalTag = [...textoTutor.matchAll(/PUNTAJE_TOTAL:\s*(\d{1,3})\s*\/\s*100/gi)].pop();
-  const sumaSes = sesScores.reduce((a, b) => a + (b || 0), 0);
-    // ── 1. Parsear puntajes por pregunta (formato del tutor) ──────────
+          // ── 1. Parsear puntajes por pregunta (formato del tutor) ──────────
   const SES_LABELS = ["Contexto y Clasificación","Marco ISO 31000 / NTC 5254",
     "Identificación de Riesgos","Análisis y Evaluación",
     "Pérdidas Máximas y Matrices","Tratamiento del Riesgo"];
