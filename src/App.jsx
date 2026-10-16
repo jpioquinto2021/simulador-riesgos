@@ -280,12 +280,17 @@ export default function App() {
   messages.forEach(m => {
     if (m.role !== "assistant") return;
     const t = String(m.content).replace(/\*\*/g, "");
-    const enc = t.match(/Pregunta\s*(\d+)\s*,?\s*(?:de\s*la\s*)?Sesi[oó]n\s*(\d)/i);
-    const pun = t.match(/Puntuaci[oó]n\s*:?\s*(\d{1,3})\s*\/\s*(\d{1,3})/i);
-    if (!enc || !pun) return;
-    const s = +enc[2] - 1, obt = +pun[1], max = +pun[2];
+        const cands = [
+      [/Pregunta\s*(\d+)[^\n]{0,30}?Sesi[oó]n\s*(\d)/i, 2, 1],
+      [/Sesi[oó]n\s*(\d)[^\n]{0,30}?Pregunta\s*(\d+)/i, 1, 2],
+      [/Pregunta\s*(\d)\s*\.\s*(\d)/i, 1, 2],
+    ].map(([re, si, qi]) => { const x = t.match(re); return x ? { pos: x.index, s: +x[si], q: +x[qi] } : null; })
+     .filter(Boolean).sort((a, b) => a.pos - b.pos);
+    const pun = t.match(/(?:Puntuaci[oó]n|Puntaje|Calificaci[oó]n)\s*(?:obtenida)?\s*:?\s*(\d{1,3})\s*\/\s*(\d{1,3})/i);
+    if (!cands.length || !pun) return;
+    const s = cands[0].s - 1, obt = +pun[1], max = +pun[2];
     if (s < 0 || s > 5 || max === 0 || obt > max) return;
-    porPregunta[s + "-" + enc[1]] = { s, obt, max };   // si re-evalúa, gana la última
+    porPregunta[s + "-" + cands[0].q] = { s, obt, max };   // si re-evalúa, gana la última
   });
   const sesScores = Array(6).fill(null);
   const sesMax = Array(6).fill(0);
