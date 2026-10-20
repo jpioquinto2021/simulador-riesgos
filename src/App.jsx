@@ -98,6 +98,43 @@ function parseMarkdown(text) {
   return text;
 }
 
+// ══ Lector de puntajes unificado (formato antiguo y nuevo del tutor) ══
+function calcularPuntajes(msgs) {
+  const num = (x) => parseFloat(String(x).replace(",", "."));
+  const cierre = Array(6).fill(null);
+  const porPregunta = {};
+  (msgs || []).forEach(m => {
+    if (m.role !== "assistant") return;
+    const t = String(m.content).replace(/\*\*/g, "");
+    // A) Tabla de cierre de sesión: "| Sesión 1 | 10/10 | 10 | 10/100 |"
+    for (const x of t.matchAll(/Sesi[oó]n\s*(\d)\s*[|\t ]+\s*(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/gi)) {
+      const s = +x[1] - 1, obt = num(x[2]), max = num(x[3]);
+      if (s >= 0 && s < 6 && max > 0 && obt <= max) cierre[s] = { obt, max };
+    }
+    // B) Evaluación por pregunta: "EVALUACIÓN — Pregunta 1, Sesión 1" + "Puntuación: 9/10"
+    const cands = [
+      [/Pregunta\s*(\d+)[^\n]{0,30}?Sesi[oó]n\s*(\d)/i, 2, 1],
+      [/Sesi[oó]n\s*(\d)[^\n]{0,30}?Pregunta\s*(\d+)/i, 1, 2],
+      [/Pregunta\s*(\d)\s*\.\s*(\d)/i, 1, 2],
+    ].map(([re, si, qi]) => { const x = t.match(re); return x ? { pos: x.index, s: +x[si], q: +x[qi] } : null; })
+     .filter(Boolean).sort((a, b) => a.pos - b.pos);
+    const pun = t.match(/(?:Puntuaci[oó]n|Puntaje|Calificaci[oó]n)\s*(?:obtenida)?\s*:?\s*(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/i);
+    if (!cands.length || !pun) return;
+    const s = cands[0].s, q = cands[0].q, obt = num(pun[1]), max = num(pun[2]);
+    if (s < 1 || s > 6 || !(max > 0) || obt > max) return;
+    const fb = (t.match(/(?:Ajuste|Lo que (?:te )?falt[oó]|Por mejorar|Oportunidad(?:es)? de mejora|Aspectos? a mejorar)[^\n]*\n([\s\S]{0,400})/i) || [])[1] || "";
+    porPregunta[s + "-" + q] = { sesion: s, pregunta: q, obt, max, obs: fb.replace(/\s+/g, " ").trim().slice(0, 300) };
+  });
+  const evaluaciones = Object.values(porPregunta);
+  const sesScores = Array(6).fill(null), sesMax = Array(6).fill(0);
+  for (let i = 0; i < 6; i++) {
+    if (cierre[i]) { sesScores[i] = cierre[i].obt; sesMax[i] = cierre[i].max; continue; }
+    evaluaciones.filter(e => e.sesion === i + 1).forEach(e => { sesScores[i] = (sesScores[i] || 0) + e.obt; sesMax[i] += e.max; });
+  }
+  const obtT = sesScores.reduce((a, b) => a + (b || 0), 0);
+  const maxT = sesMax.reduce((a, b) => a + b, 0);
+  return { sesScores, sesMax, evaluaciones, total: maxT > 0 ? Math.round(obtT / maxT * 100) : 0 };
+}
 export default function App() {
   const [screen, setScreen] = useState("register");
   const [student, setStudent] = useState({ nombre: "", cedula: "", email: "", movil: "" });
@@ -115,30 +152,8 @@ export default function App() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
-    const saveSession = async (msgs, sess, sc, std) => {
-    // ── Puntaje real y detalle por pregunta (para Sheet e informe docente) ──
-    const porPregunta = {};
-    msgs.forEach(m => {
-      if (m.role !== "assistant") return;
-      const t = String(m.content).replace(/\*\*/g, "");
-      const cands = [
-        [/Pregunta\s*(\d+)[^\n]{0,30}?Sesi[oó]n\s*(\d)/i, 2, 1],
-        [/Sesi[oó]n\s*(\d)[^\n]{0,30}?Pregunta\s*(\d+)/i, 1, 2],
-        [/Pregunta\s*(\d)\s*\.\s*(\d)/i, 1, 2],
-      ].map(([re, si, qi]) => { const x = t.match(re); return x ? { pos: x.index, s: +x[si], q: +x[qi] } : null; })
-       .filter(Boolean).sort((a, b) => a.pos - b.pos);
-      const pun = t.match(/(?:Puntuaci[oó]n|Puntaje|Calificaci[oó]n)\s*(?:obtenida)?\s*:?\s*(\d{1,3})\s*\/\s*(\d{1,3})/i);
-      if (!cands.length || !pun) return;
-      const s = cands[0].s, q = cands[0].q, obt = +pun[1], max = +pun[2];
-      if (s < 1 || s > 6 || max === 0 || obt > max) return;
-      const fb = (t.match(/(?:Ajuste|Lo que (?:te )?falt[oó]|Por mejorar|Oportunidad(?:es)? de mejora|Aspectos? a mejorar)[^\n]*\n([\s\S]{0,400})/i) || [])[1] || "";
-      porPregunta[s + "-" + q] = { sesion: s, pregunta: q, obt, max, obs: fb.replace(/\s+/g, " ").trim().slice(0, 300) };
-    });
-    const evaluaciones = Object.values(porPregunta);
-    const obtT = evaluaciones.reduce((a, e) => a + e.obt, 0);
-    const maxT = evaluaciones.reduce((a, e) => a + e.max, 0);
-    const puntajeReal = maxT > 0 ? Math.round(obtT / maxT * 100) : 0;
-
+      const saveSession = async (msgs, sess, sc, std) => {
+    const P = calcularPuntajes(msgs);
     const data = JSON.stringify({ messages: msgs, session: sess, score: sc, student: std, lastUpdate: new Date().toISOString() });
     try { localStorage.setItem(`sim_${std.cedula}`, data); } catch (e) {
       try { await window.storage?.set(`sim_${std.cedula}`, data); } catch (e2) {}
@@ -146,11 +161,15 @@ export default function App() {
     try {
       await fetch("/.netlify/functions/chat", {
         method: "POST",
-        body: JSON.stringify({ type: "progress", cedula: std.cedula, nombre: std.nombre, session: sess, score: puntajeReal, evaluaciones }),
+        body: JSON.stringify({
+          type: "progress", cedula: std.cedula, nombre: std.nombre, session: sess,
+          score: P.total,
+          sesiones: P.sesScores.map((o, i) => ({ sesion: i + 1, obt: o, max: P.sesMax[i] })),
+          evaluaciones: P.evaluaciones,
+        }),
       });
     } catch (e) {}
   };
-
   const loadSession = async (cedula) => {
     try {
       const saved = localStorage.getItem(`sim_${cedula}`);
@@ -295,37 +314,15 @@ export default function App() {
     const fechaLarga = ahora.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
     const horaCorta = ahora.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
     const fechaArchivo = ahora.toISOString().slice(0, 10);
-          // ── 1. Parsear puntajes por pregunta (formato del tutor) ──────────
+            // ── 1. Puntajes (lector unificado: formato antiguo y nuevo) ───────
   const SES_LABELS = ["Contexto y Clasificación","Marco ISO 31000 / NTC 5254",
     "Identificación de Riesgos","Análisis y Evaluación",
     "Pérdidas Máximas y Matrices","Tratamiento del Riesgo"];
-  const porPregunta = {};
-  messages.forEach(m => {
-    if (m.role !== "assistant") return;
-    const t = String(m.content).replace(/\*\*/g, "");
-        const cands = [
-      [/Pregunta\s*(\d+)[^\n]{0,30}?Sesi[oó]n\s*(\d)/i, 2, 1],
-      [/Sesi[oó]n\s*(\d)[^\n]{0,30}?Pregunta\s*(\d+)/i, 1, 2],
-      [/Pregunta\s*(\d)\s*\.\s*(\d)/i, 1, 2],
-    ].map(([re, si, qi]) => { const x = t.match(re); return x ? { pos: x.index, s: +x[si], q: +x[qi] } : null; })
-     .filter(Boolean).sort((a, b) => a.pos - b.pos);
-    const pun = t.match(/(?:Puntuaci[oó]n|Puntaje|Calificaci[oó]n)\s*(?:obtenida)?\s*:?\s*(\d{1,3})\s*\/\s*(\d{1,3})/i);
-    if (!cands.length || !pun) return;
-    const s = cands[0].s - 1, obt = +pun[1], max = +pun[2];
-    if (s < 0 || s > 5 || max === 0 || obt > max) return;
-    porPregunta[s + "-" + cands[0].q] = { s, obt, max };   // si re-evalúa, gana la última
-  });
-  const sesScores = Array(6).fill(null);
-  const sesMax = Array(6).fill(0);
-  Object.values(porPregunta).forEach(({ s, obt, max }) => {
-    sesScores[s] = (sesScores[s] || 0) + obt;
-    sesMax[s] += max;
-  });
-  const MAX_PTS = sesMax.map(x => x || 30);
-  const obtTotal = sesScores.reduce((a, b) => a + (b || 0), 0);
-  const maxTotal = sesMax.reduce((a, b) => a + b, 0);
+  const P = calcularPuntajes(messages);
+  const sesScores = P.sesScores;
+  const MAX_PTS = P.sesMax.map(x => x || 30);
   const totalTag = null;   // compatibilidad con el código de abajo
-  const totalObtenido = maxTotal > 0 ? Math.round(obtTotal / maxTotal * 100) : score;
+  const totalObtenido = P.total;
   // ── Nota (escala 0–5) y estados separados ─────────────────────────
   const notaNum = Math.round((totalObtenido / 100) * 5 * 10) / 10;
   const finalizado = !!totalTag || sesScores.every(s => s !== null);
